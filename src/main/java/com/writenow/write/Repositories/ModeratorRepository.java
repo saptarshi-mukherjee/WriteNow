@@ -24,4 +24,13 @@ public interface ModeratorRepository extends JpaRepository<Moderator,Long> {
             nativeQuery = true
     )
     public List<ModeratorProjection> fetchModeratorByName(@Param("fullName") String fullName);
+
+
+//    @Query(
+//            value = "select * from moderators where id = :id",
+//            nativeQuery = true
+//    )
+//    public Moderator fetchModeratorById(@Param("id") long id);
+
+    public Moderator findById(long id);
 }

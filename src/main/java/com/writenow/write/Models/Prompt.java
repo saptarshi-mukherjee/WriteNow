@@ -21,7 +21,7 @@ public class Prompt {
     @ManyToOne
     @JsonBackReference("prompt-contest")
     private Contest contest;
-    @OneToMany(mappedBy = "prompt")
+    @OneToMany(mappedBy = "prompt", cascade = CascadeType.PERSIST)
     @JsonManagedReference("story-prompt")
     private List<Story> stories;
 

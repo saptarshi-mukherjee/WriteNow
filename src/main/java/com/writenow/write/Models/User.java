@@ -15,7 +15,7 @@ public class User {
     private String fullName;
     private String username;
     private String password;
-    public String email;
+    private String email;
     private EmailStatus status;
     private LocalDateTime joinedAt;
 
