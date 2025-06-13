@@ -5,8 +5,10 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
-@Entity(name="users")
+@Entity
+@Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "user_type")
 public class User {
 
     @Id

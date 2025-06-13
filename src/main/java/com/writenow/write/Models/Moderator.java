@@ -2,6 +2,7 @@ package com.writenow.write.Models;
 
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "moderators")
+@DiscriminatorValue("MODERATOR")
 public class Moderator extends User {
     private Long contestCount;
     private ModeratorStatus moderatorStatus;

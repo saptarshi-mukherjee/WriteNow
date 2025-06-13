@@ -2,6 +2,7 @@ package com.writenow.write.Models;
 
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity(name = "writers")
+@DiscriminatorValue("WRITER")
 public class Writer extends User {
 
     private Long failCount;
