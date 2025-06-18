@@ -3,32 +3,49 @@ package com.writenow.write.Services.ContestService;
 
 import com.writenow.write.DTO.ResponseDto.ContestResponseDto;
 import com.writenow.write.DTO.ResponseDto.PromptResponseDto;
-import com.writenow.write.Models.Contest;
-import com.writenow.write.Models.Moderator;
-import com.writenow.write.Models.Prompt;
-import com.writenow.write.Repositories.ContestRepository;
-import com.writenow.write.Repositories.ModeratorRepository;
-import com.writenow.write.Repositories.PromptRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.writenow.write.Models.*;
+import com.writenow.write.Projections.UserIdProjection;
+import com.writenow.write.Repositories.*;
+import com.writenow.write.Services.ComplianceCheckService.ComplianceCheckService;
+import com.writenow.write.Threads.ComplianceCheckThread;
+import jakarta.annotation.PreDestroy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class ContestServiceImpl implements ContestService {
 
-    @Autowired
     private ContestRepository contestRepository;
-    @Autowired
     private ModeratorRepository moderatorRepository;
-    @Autowired
     private PromptRepository promptRepository;
-    @Autowired
     private RedisTemplate<String,Object> redisTemplate;
+    private WriterRepository writerRepository;
+    private StoryRepository storyRepository;
+    private UserRepository userRepository;
+    private ExecutorService exs;
+    private ComplianceCheckService complianceCheckService;
+    public static final Object lock=new Object();
 
+    public ContestServiceImpl(ContestRepository contestRepository, ModeratorRepository moderatorRepository, PromptRepository promptRepository,
+                              RedisTemplate<String, Object> redisTemplate, WriterRepository writerRepository, StoryRepository storyRepository,
+                              UserRepository userRepository, ComplianceCheckService complianceCheckService) {
+        this.contestRepository = contestRepository;
+        this.moderatorRepository = moderatorRepository;
+        this.promptRepository = promptRepository;
+        this.redisTemplate = redisTemplate;
+        this.writerRepository = writerRepository;
+        this.storyRepository = storyRepository;
+        this.userRepository = userRepository;
+        this.exs = Executors.newFixedThreadPool(10);
+        this.complianceCheckService=complianceCheckService;
+    }
 
     @Override
     public String createContest(String description, long modId, List<String> prompts) {
@@ -68,5 +85,35 @@ public class ContestServiceImpl implements ContestService {
         response.setPrompts(promptResponseList);
         redisTemplate.opsForValue().set("CONTEST::"+id, response, Duration.ofMinutes(120));
         return response;
+    }
+
+    @Override
+    public String submitStory(String fullName, long promptId, String title, String body) {
+        List<UserIdProjection> userIdProjectionList=userRepository.fetchByName(fullName);
+        long userId=userIdProjectionList.getFirst().getId();
+        Optional<Writer> optionalWriter=writerRepository.findById(userId);
+        Writer writer=null;
+        if(optionalWriter.isPresent())
+            writer=optionalWriter.get();
+        Optional<Prompt> optionalPrompt=promptRepository.findById(promptId);
+        Prompt prompt=null;
+        if(optionalPrompt.isPresent())
+            prompt=optionalPrompt.get();
+        Story story=new Story();
+        story.setWriter(writer);
+        story.setPrompt(prompt);
+        story.setStoryStatus(StoryStatus.PARTICIPANT);
+        story.setTitle(title);
+        story.setBody(body);
+        story=storyRepository.save(story);
+        ComplianceCheckThread thread=new ComplianceCheckThread(complianceCheckService,lock,story.getId());
+        exs.submit(thread);
+        return "story submitted successfully";
+    }
+
+
+    @PreDestroy
+    public void shutdown() {
+        exs.shutdown();
     }
 }

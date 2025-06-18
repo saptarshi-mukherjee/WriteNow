@@ -29,7 +29,7 @@ public class Story {
     @JsonBackReference("story-prompt")
     private Prompt prompt;
     private Double score;
-    private boolean complianceStatus;
+    private ComplianceStatus complianceStatus;
     @ManyToMany(cascade = CascadeType.PERSIST)
     private List<Tag> tags;
     private StoryStatus storyStatus;
@@ -44,29 +44,13 @@ public class Story {
     public Story() {
         submissionDate= LocalDateTime.now();
         score=0.0;
-        complianceStatus=false;
+        complianceStatus=ComplianceStatus.PENDING;
         tags=new ArrayList<>();
         storyStatus=StoryStatus.PARTICIPANT;
         likes=new ArrayList<>();
         comments=new ArrayList<>();
     }
 
-
-    public List<Comment> getComments() {
-        return comments;
-    }
-
-    public void setComments(List<Comment> comments) {
-        this.comments = comments;
-    }
-
-    public List<Like> getLikes() {
-        return likes;
-    }
-
-    public void setLikes(List<Like> likes) {
-        this.likes = likes;
-    }
 
     public Long getId() {
         return id;
@@ -124,11 +108,11 @@ public class Story {
         this.score = score;
     }
 
-    public boolean isComplianceStatus() {
+    public ComplianceStatus getComplianceStatus() {
         return complianceStatus;
     }
 
-    public void setComplianceStatus(boolean complianceStatus) {
+    public void setComplianceStatus(ComplianceStatus complianceStatus) {
         this.complianceStatus = complianceStatus;
     }
 
@@ -146,5 +130,21 @@ public class Story {
 
     public void setStoryStatus(StoryStatus storyStatus) {
         this.storyStatus = storyStatus;
+    }
+
+    public List<Like> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(List<Like> likes) {
+        this.likes = likes;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
     }
 }
