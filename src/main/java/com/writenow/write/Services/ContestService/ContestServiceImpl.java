@@ -1,8 +1,10 @@
 package com.writenow.write.Services.ContestService;
 
 
+import com.writenow.write.DTO.ResponseDto.CommentResponseDto;
 import com.writenow.write.DTO.ResponseDto.ContestResponseDto;
 import com.writenow.write.DTO.ResponseDto.PromptResponseDto;
+import com.writenow.write.DTO.ResponseDto.StoryResponseDto;
 import com.writenow.write.Models.*;
 import com.writenow.write.Projections.UserIdProjection;
 import com.writenow.write.Repositories.*;
@@ -10,6 +12,7 @@ import com.writenow.write.Services.ComplianceCheckService.ComplianceCheckService
 import com.writenow.write.Threads.ComplianceCheckThread;
 import jakarta.annotation.PreDestroy;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -32,10 +35,11 @@ public class ContestServiceImpl implements ContestService {
     private ExecutorService exs;
     private ComplianceCheckService complianceCheckService;
     public static final Object lock=new Object();
+    private JavaMailSender mailSender;
 
     public ContestServiceImpl(ContestRepository contestRepository, ModeratorRepository moderatorRepository, PromptRepository promptRepository,
                               RedisTemplate<String, Object> redisTemplate, WriterRepository writerRepository, StoryRepository storyRepository,
-                              UserRepository userRepository, ComplianceCheckService complianceCheckService) {
+                              UserRepository userRepository, ComplianceCheckService complianceCheckService, JavaMailSender mailSender) {
         this.contestRepository = contestRepository;
         this.moderatorRepository = moderatorRepository;
         this.promptRepository = promptRepository;
@@ -45,6 +49,7 @@ public class ContestServiceImpl implements ContestService {
         this.userRepository = userRepository;
         this.exs = Executors.newFixedThreadPool(10);
         this.complianceCheckService=complianceCheckService;
+        this.mailSender=mailSender;
     }
 
     @Override
@@ -106,9 +111,32 @@ public class ContestServiceImpl implements ContestService {
         story.setTitle(title);
         story.setBody(body);
         story=storyRepository.save(story);
-        ComplianceCheckThread thread=new ComplianceCheckThread(complianceCheckService,lock,story.getId());
+        ComplianceCheckThread thread=new ComplianceCheckThread(complianceCheckService,lock,story.getId(), mailSender , writer.getEmail());
         exs.submit(thread);
         return "story submitted successfully";
+    }
+
+    @Override
+    public StoryResponseDto getStory(long storyId) {
+        StoryResponseDto cachedResponse=(StoryResponseDto) redisTemplate.opsForValue().get("STORY::"+storyId);
+        if(cachedResponse!=null)
+            return cachedResponse;
+        Story story=storyRepository.fetchStoryById(storyId);
+        StoryResponseDto response=new StoryResponseDto();
+        response.setTitle(story.getTitle());
+        response.setWriter(story.getWriter().getFullName());
+        response.setPrompt(story.getPrompt().getDescription());
+        response.setText(story.getBody());
+        response.setLikeCount(story.getLikes().size());
+        for(Comment comment : story.getComments()) {
+            CommentResponseDto commentResponse=new CommentResponseDto();
+            commentResponse.setCommenter(comment.getWriter().getFullName());
+            commentResponse.setCommentTime(comment.getCreatedAt().toString());
+            commentResponse.setCommentText(comment.getCommentText());
+            response.getComments().add(commentResponse);
+        }
+        redisTemplate.opsForValue().set("STORY::"+storyId, response, Duration.ofMinutes(10));
+        return response;
     }
 
 

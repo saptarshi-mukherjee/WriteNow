@@ -1,5 +1,7 @@
 package com.writenow.write.Services.ComplianceCheckService;
 
+import com.writenow.write.Models.ComplianceStatus;
+
 public interface ComplianceCheckService {
-    public void check(long storyId);
+    public ComplianceStatus check(long storyId);
 }

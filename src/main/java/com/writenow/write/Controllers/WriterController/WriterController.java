@@ -1,6 +1,7 @@
 package com.writenow.write.Controllers.WriterController;
 
 
+import com.writenow.write.DTO.RequestDto.CommentRequestDto;
 import com.writenow.write.DTO.RequestDto.WriterRequestDto;
 import com.writenow.write.DTO.ResponseDto.WriterResponseDto;
 import com.writenow.write.Services.WriterService.WriterService;
@@ -24,6 +25,18 @@ public class WriterController {
     @GetMapping("/get/{fullName}")
     public WriterResponseDto getWriter(@PathVariable("fullName") String fullName) {
         return writerService.getWriterByName(fullName);
+    }
+
+
+    @PostMapping("/like")
+    public void likeStory(@RequestParam("name") String fullName, @RequestParam("storyId") long storyId) {
+        writerService.likeStory(fullName, storyId);
+    }
+
+
+    @PostMapping("/comment")
+    public void comment(@RequestBody CommentRequestDto request) {
+        writerService.addComment(request.getFullName(), request.getStoryId(), request.getCommentText());
     }
 
 }

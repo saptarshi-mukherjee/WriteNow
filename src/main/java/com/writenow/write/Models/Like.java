@@ -14,6 +14,10 @@ public class Like extends Interaction {
     @JsonBackReference("like-writer")
     private Writer writer;
 
+    public Like() {
+        super();
+    }
+
 
     public Story getStory() {
         return story;

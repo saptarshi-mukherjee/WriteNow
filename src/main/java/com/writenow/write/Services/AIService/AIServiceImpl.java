@@ -27,7 +27,7 @@ public class AIServiceImpl implements AIService {
     @Override
     public String checkPromptAdherence(String prompt, String story) {
         String url="https://api.openai.com/v1/chat/completions";
-        String apiKey="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";
+        String apiKey="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";
         RestTemplate restTemplate=new RestTemplate();
         HttpHeaders headers=new HttpHeaders();
         headers.add("Authorization", "Bearer "+apiKey);

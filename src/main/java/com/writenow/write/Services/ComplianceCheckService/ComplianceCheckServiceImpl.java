@@ -24,7 +24,7 @@ public class ComplianceCheckServiceImpl implements ComplianceCheckService {
 
     @Override
     @Transactional
-    public void check(long storyId) {
+    public ComplianceStatus check(long storyId) {
 
         Story story=storyRepository.fetchStoryById(storyId);
         StoryComplianceStrategy strategy=new FourFoldStrategy(aiService,winstonService);
@@ -32,7 +32,8 @@ public class ComplianceCheckServiceImpl implements ComplianceCheckService {
             story.setComplianceStatus(ComplianceStatus.COMPLIANT);
         else
             story.setComplianceStatus(ComplianceStatus.NOT_COMPLIANT);
-        storyRepository.save(story);
+        story=storyRepository.save(story);
+        return story.getComplianceStatus();
 
     }
 }

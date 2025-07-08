@@ -4,6 +4,7 @@ package com.writenow.write.Controllers.ContestController;
 import com.writenow.write.DTO.RequestDto.ContestRequestDto;
 import com.writenow.write.DTO.RequestDto.StoryRequestDto;
 import com.writenow.write.DTO.ResponseDto.ContestResponseDto;
+import com.writenow.write.DTO.ResponseDto.StoryResponseDto;
 import com.writenow.write.Services.ContestService.ContestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,5 +32,11 @@ public class ContestController {
     @PostMapping("/submit")
     public String submitStory(@RequestBody StoryRequestDto request) {
         return contestService.submitStory(request.getFullName(), request.getPromptId(), request.getTitle(), request.getBody());
+    }
+
+
+    @GetMapping("/get/story/{storyId}")
+    public StoryResponseDto getStory(@PathVariable("storyId") long storyId) {
+        return contestService.getStory(storyId);
     }
 }
