@@ -3,10 +3,14 @@ package com.writenow.write.Controllers.WriterController;
 
 import com.writenow.write.DTO.RequestDto.CommentRequestDto;
 import com.writenow.write.DTO.RequestDto.WriterRequestDto;
+import com.writenow.write.DTO.ResponseDto.NotificationResponseDto;
 import com.writenow.write.DTO.ResponseDto.WriterResponseDto;
+import com.writenow.write.Services.NotificationService.NotificationService;
 import com.writenow.write.Services.WriterService.WriterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/writer")
@@ -15,6 +19,8 @@ public class WriterController {
 
     @Autowired
     private WriterService writerService;
+    @Autowired
+    private NotificationService notificationService;
 
 
     @PostMapping("/post")
@@ -37,6 +43,11 @@ public class WriterController {
     @PostMapping("/comment")
     public void comment(@RequestBody CommentRequestDto request) {
         writerService.addComment(request.getFullName(), request.getStoryId(), request.getCommentText());
+    }
+
+    @GetMapping("/notifications/{fullName}")
+    public List<NotificationResponseDto> getNotifications(@PathVariable("fullName") String fullName) {
+        return notificationService.getNotifications(fullName);
     }
 
 }

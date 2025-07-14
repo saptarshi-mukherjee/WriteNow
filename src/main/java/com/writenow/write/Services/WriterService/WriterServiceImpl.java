@@ -7,30 +7,41 @@ import com.writenow.write.Repositories.CommentRepository;
 import com.writenow.write.Repositories.LikeRepository;
 import com.writenow.write.Repositories.StoryRepository;
 import com.writenow.write.Repositories.WriterRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.cache.CacheProperties;
+import com.writenow.write.Services.NotificationService.NotificationService;
+import com.writenow.write.Threads.NotificationCreationThread;
+import jakarta.annotation.PreDestroy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 @Service
 public class WriterServiceImpl implements WriterService {
 
-    @Autowired
     private WriterRepository writerRepository;
-    @Autowired
     private RedisTemplate<String, Object> redisTemplate;
-    @Autowired
     private LikeRepository likeRepository;
-    @Autowired
     private CommentRepository commentRepository;
-    @Autowired
     private StoryRepository storyRepository;
+    private NotificationService notificationService;
+    private ExecutorService exs;
+    public static final Object lock=new Object();
+
+    public WriterServiceImpl(WriterRepository writerRepository, RedisTemplate<String, Object> redisTemplate, LikeRepository likeRepository,
+                             CommentRepository commentRepository, StoryRepository storyRepository, NotificationService notificationService) {
+        this.writerRepository = writerRepository;
+        this.redisTemplate = redisTemplate;
+        this.likeRepository = likeRepository;
+        this.commentRepository = commentRepository;
+        this.storyRepository = storyRepository;
+        this.notificationService = notificationService;
+        //this.exs = Executors.newFixedThreadPool(20);
+    }
 
     @Override
     public String addWriter(String fullName, String email) {
@@ -75,6 +86,7 @@ public class WriterServiceImpl implements WriterService {
         storyRepository.save(story);
         writer.getLikes().add(like);
         writerRepository.save(writer);
+        notificationService.createNotification(writer.getId(), like.getId(), story.getWriter().getId());
     }
 
     @Override
@@ -94,5 +106,12 @@ public class WriterServiceImpl implements WriterService {
         storyRepository.save(story);
         writer.getComments().add(comment);
         writerRepository.save(writer);
+        notificationService.createNotification(writer.getId(), comment.getId(), story.getWriter().getId());
     }
+
+
+//    @PreDestroy
+//    public void shutdown() {
+//        exs.shutdown();
+//    }
 }

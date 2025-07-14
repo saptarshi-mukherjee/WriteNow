@@ -12,12 +12,12 @@ public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
-    private Writer writer;
-    @OneToOne
+    @ManyToOne
+    private Writer publisher;
+    @ManyToOne
     private Interaction interaction;
-    @ManyToMany
-    private List<Writer> subscribers;
+    @ManyToOne
+    private Writer subscriber;
     private LocalDateTime createdAt;
     private NotificationType type;
 
@@ -35,12 +35,12 @@ public class Notification {
         this.id = id;
     }
 
-    public Writer getWriter() {
-        return writer;
+    public Writer getPublisher() {
+        return publisher;
     }
 
-    public void setWriter(Writer writer) {
-        this.writer = writer;
+    public void setPublisher(Writer publisher) {
+        this.publisher = publisher;
     }
 
     public Interaction getInteraction() {
@@ -51,12 +51,12 @@ public class Notification {
         this.interaction = interaction;
     }
 
-    public List<Writer> getSubscribers() {
-        return subscribers;
+    public Writer getSubscriber() {
+        return subscriber;
     }
 
-    public void setSubscribers(List<Writer> subscribers) {
-        this.subscribers = subscribers;
+    public void setSubscriber(Writer subscriber) {
+        this.subscriber = subscriber;
     }
 
     public LocalDateTime getCreatedAt() {
