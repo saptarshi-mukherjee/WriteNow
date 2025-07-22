@@ -1,6 +1,9 @@
 package com.writenow.write.Services.WriterService;
 
+import com.writenow.write.DTO.ResponseDto.FollowerResponseDto;
+import com.writenow.write.DTO.ResponseDto.StoryListResponseDto;
 import com.writenow.write.DTO.ResponseDto.WriterResponseDto;
+import com.writenow.write.DTO.ResponseDto.WriterToStoryResponseDto;
 import com.writenow.write.Models.*;
 import com.writenow.write.Projections.WriterProjection;
 import com.writenow.write.Repositories.CommentRepository;
@@ -14,6 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -107,6 +111,57 @@ public class WriterServiceImpl implements WriterService {
         writer.getComments().add(comment);
         writerRepository.save(writer);
         notificationService.createNotification(writer.getId(), comment.getId(), story.getWriter().getId());
+    }
+
+    @Override
+    public void follow(long followerId, long followingId) {
+        Writer follower=writerRepository.findById(followerId).get();
+        Writer following=writerRepository.findById(followingId).get();
+        following.getFollowers().add(follower);
+        writerRepository.save(following);
+        follower.getFollowing().add(following);
+        writerRepository.save(follower);
+        notificationService.createNotification(follower.getId(),null, following.getId());
+    }
+
+    @Override
+    public List<FollowerResponseDto> getFollowers(long writerId) {
+        List<FollowerResponseDto> cachedList=(List<FollowerResponseDto>) redisTemplate.opsForValue().get("FOLLOWERS::"+writerId);
+        if(cachedList!=null)
+            return cachedList;
+        Writer writer=writerRepository.findById(writerId).get();
+        List<Writer> followers=writer.getFollowers();
+        List<FollowerResponseDto> responseList=new ArrayList<>();
+        for(Writer follower : followers) {
+            FollowerResponseDto response=new FollowerResponseDto();
+            response.setFollowerId(follower.getId());
+            response.setFollowerName(follower.getFullName());
+            responseList.add(response);
+        }
+        redisTemplate.opsForValue().set("FOLLOWERS::"+writerId, responseList, Duration.ofMinutes(20));
+        return responseList;
+    }
+
+    @Override
+    public WriterToStoryResponseDto getStoryByWriter(String fullName) {
+        List<WriterProjection> writerProjectionList=writerRepository.fetchWriterByName(fullName);
+        long writerId=writerProjectionList.getFirst().getId();
+        WriterToStoryResponseDto cachedResponse= (WriterToStoryResponseDto) redisTemplate.opsForValue().get("STORY-WRITER::"+writerId);
+        if(cachedResponse!=null)
+            return cachedResponse;
+        List<Story> stories=storyRepository.fetchStoriesByWriterId(writerId);
+        WriterToStoryResponseDto response=new WriterToStoryResponseDto();
+        for(Story story : stories) {
+            StoryListResponseDto storyResponse=new StoryListResponseDto();
+            storyResponse.setStoryId(story.getId());
+            storyResponse.setTitle(story.getTitle());
+            storyResponse.setSubmissionDate(story.getSubmissionDate().toString());
+            storyResponse.setPromptId(story.getPrompt().getId());
+            storyResponse.setPrompt(story.getPrompt().getDescription());
+            response.getStoryList().add(storyResponse);
+        }
+        redisTemplate.opsForValue().set("STORY-WRITER::"+writerId, response, Duration.ofMinutes(60));
+        return response;
     }
 
 

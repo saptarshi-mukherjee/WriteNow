@@ -2,6 +2,7 @@ package com.writenow.write.Services.WinstonService;
 
 import com.writenow.write.DTO.APIResposeDto.AIDetectionDto;
 import com.writenow.write.DTO.APIResposeDto.PlagResponseDto;
+import com.writenow.write.Models.Writer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
